@@ -3,8 +3,9 @@ from items import *
 from tortoise.contrib.fastapi import register_tortoise, tortoise_exception_handlers
 from fastapi_pagination import Page, add_pagination
 from fastapi_pagination.ext.tortoise import apaginate
-import logging
 from tortoise.expressions import Q, RawSQL
+
+from settings import settings
 
 app = FastAPI(
     title='Maskirovka',
@@ -12,21 +13,24 @@ app = FastAPI(
 )
 add_pagination(app)
 
+
 @app.get('/eras', response_model=list[EraItem])
 async def get_eras():
     return await EraModel.all()
 
+
 @app.get('/factions', response_model=list[FactionItem])
 async def get_factions():
     return await FactionModel.all()
+
 
 @app.get('/units')
 async def get_units(
         era_id: int | None = None,
         faction_id: list[int] | None = Query(None),
         unit_type: str | None = None,
-	    title: str | None = None,
-		role: str | None = None,
+        title: str | None = None,
+        role: str | None = None,
         specials: str | None = Query(None, min_length=2),
         pv: int | None = None,
         sz: int | None = None,
@@ -147,6 +151,7 @@ async def get_units(
 
     return await apaginate(query.distinct())
 
+
 @app.get('/roles')
 async def get_roles():
     return await (UnitModel
@@ -154,6 +159,7 @@ async def get_roles():
                   .distinct()
                   .order_by('role')
                   .values_list('role', flat=True))
+
 
 @app.get('/types')
 async def get_roles():
@@ -163,13 +169,10 @@ async def get_roles():
                   .order_by('unit_type')
                   .values_list('unit_type', flat=True))
 
-# logging.basicConfig(level=logging.DEBUG)
-# logger = logging.getLogger("db_client")
-# logger.setLevel(logging.DEBUG)
 
 register_tortoise(
     app,
-    db_url='sqlite://Maskirovka.db',
+    db_url=f"{settings.db_url}",
     modules={'models': ['items']},
     generate_schemas=False,
     add_exception_handlers=True,
