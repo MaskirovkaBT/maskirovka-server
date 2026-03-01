@@ -26,6 +26,8 @@ async def get_units(
     struc: int | None = None,
     threshold: int | None = None,
     mv: int | None = None,
+    sort_by: str | None = Query(None),
+    sort_order: str = Query("asc"),
 
     x_specials_mode: str = Header("or", alias="X-Specials-Mode"),
     x_pv_mode: str = Header("eq", alias="X-Pv-Mode"),
@@ -62,6 +64,13 @@ async def get_units(
                        f"Допустимые значения: {', '.join(valid_modes)}"
             )
 
+    if sort_order.lower() not in {"asc", "desc"}:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Невалидное значение sort_order: '{sort_order}'. "
+                   f"Допустимые значения: asc, desc"
+        )
+
     query = await build_unit_query(
         era_id=era_id,
         faction_id=faction_id,
@@ -92,6 +101,8 @@ async def get_units(
         x_struc_mode=x_struc_mode,
         x_threshold_mode=x_threshold_mode,
         x_mv_mode=x_mv_mode,
+        sort_by=sort_by,
+        sort_order=sort_order,
     )
 
     return await apaginate(query.distinct())

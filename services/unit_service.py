@@ -9,7 +9,6 @@ async def build_unit_query(
     title: str | None = None,
     role: str | None = None,
     specials: str | None = None,
-    x_specials_mode: str = "or",
     pv: int | None = None,
     sz: int | None = None,
     short: int | None = None,
@@ -21,6 +20,8 @@ async def build_unit_query(
     struc: int | None = None,
     threshold: int | None = None,
     mv: int | None = None,
+
+    x_specials_mode: str = "or",
     x_pv_mode: str = "eq",
     x_sz_mode: str = "eq",
     x_short_mode: str = "eq",
@@ -32,6 +33,8 @@ async def build_unit_query(
     x_struc_mode: str = "eq",
     x_threshold_mode: str = "eq",
     x_mv_mode: str = "eq",
+    sort_by: str | None = None,
+    sort_order: str = "asc",
 ):
     query = UnitModel.all()
 
@@ -114,5 +117,17 @@ async def build_unit_query(
         query = query.annotate(
             mv_int=RawSQL("CAST(mv AS INTEGER)")
         ).filter(**{filter_key: mv})
+
+    valid_sort_fields = {"title", "pv", "role", "short", "medium", "long", "armor", "struc", "mv"}
+    if sort_by and sort_by in valid_sort_fields:
+        if sort_by == "mv":
+            query = query.annotate(
+                mv_int=RawSQL("CAST(mv AS INTEGER)")
+            )
+            order_prefix = "-" if sort_order.lower() == "desc" else ""
+            query = query.order_by(f"{order_prefix}mv_int")
+        else:
+            order_prefix = "-" if sort_order.lower() == "desc" else ""
+            query = query.order_by(f"{order_prefix}{sort_by}")
 
     return query
