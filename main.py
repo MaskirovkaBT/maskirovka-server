@@ -1,25 +1,40 @@
-from fastapi import FastAPI, Query, Header
-from items import *
-from tortoise.contrib.fastapi import register_tortoise, tortoise_exception_handlers
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI, Query, Header, HTTPException
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.inmemory import InMemoryBackend
+from fastapi_cache.decorator import cache
 from fastapi_pagination import Page, add_pagination
 from fastapi_pagination.ext.tortoise import apaginate
+from tortoise.contrib.fastapi import register_tortoise, tortoise_exception_handlers
 from tortoise.expressions import Q, RawSQL
 
+from items import *
 from settings import settings
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    FastAPICache.init(InMemoryBackend())
+    yield
+
 
 app = FastAPI(
     title='Maskirovka',
+    lifespan=lifespan,
     exception_handlers=tortoise_exception_handlers(),
 )
 add_pagination(app)
 
 
 @app.get('/eras', response_model=list[EraItem])
+@cache(expire=300)
 async def get_eras():
     return await EraModel.all()
 
 
 @app.get('/factions', response_model=list[FactionItem])
+@cache(expire=300)
 async def get_factions():
     return await FactionModel.all()
 
@@ -92,6 +107,28 @@ async def get_units(
         "lte": "__lte",
     }
 
+    valid_modes = {"eq", "gt", "gte", "lt", "lte"}
+    mode_headers = {
+        "x_pv_mode": x_pv_mode,
+        "x_sz_mode": x_sz_mode,
+        "x_short_mode": x_short_mode,
+        "x_medium_mode": x_medium_mode,
+        "x_long_mode": x_long_mode,
+        "x_extreme_mode": x_extreme_mode,
+        "x_ov_mode": x_ov_mode,
+        "x_armor_mode": x_armor_mode,
+        "x_struc_mode": x_struc_mode,
+        "x_threshold_mode": x_threshold_mode,
+        "x_mv_mode": x_mv_mode,
+    }
+    for header_name, mode_value in mode_headers.items():
+        if mode_value not in valid_modes:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Невалидное значение заголовка {header_name}: '{mode_value}'."
+                       f"Допустимые значения: {', '.join(valid_modes)}"
+            )
+
     if pv:
         suffix = operators.get(x_pv_mode, "")
         filter_key = f"pv{suffix}"
@@ -153,6 +190,7 @@ async def get_units(
 
 
 @app.get('/roles')
+@cache(expire=300)
 async def get_roles():
     return await (UnitModel
                   .all()
@@ -162,7 +200,8 @@ async def get_roles():
 
 
 @app.get('/types')
-async def get_roles():
+@cache(expire=300)
+async def get_types():
     return await (UnitModel
                   .all()
                   .distinct()
