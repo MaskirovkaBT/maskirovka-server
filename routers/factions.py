@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from fastapi_cache.decorator import cache
-from items import FactionModel, FactionItem
+from models import FactionModel
+from schemas import FactionItem
 
 router = APIRouter(prefix="/factions", tags=["factions"])
 

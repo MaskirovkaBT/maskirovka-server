@@ -1,5 +1,5 @@
 from tortoise.expressions import Q, RawSQL
-from items import UnitModel
+from models import UnitModel
 
 
 async def build_unit_query(

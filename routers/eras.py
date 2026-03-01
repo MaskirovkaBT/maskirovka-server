@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from fastapi_cache.decorator import cache
-from items import EraModel, EraItem
+from models import EraModel
+from schemas import EraItem
 
 router = APIRouter(prefix="/eras", tags=["eras"])
 

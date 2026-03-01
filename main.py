@@ -32,7 +32,7 @@ app.include_router(meta_router)
 register_tortoise(
     app,
     db_url=f"{settings.db_url}",
-    modules={'models': ['items']},
+    modules={'models': ['models']},
     generate_schemas=False,
     add_exception_handlers=True,
 )

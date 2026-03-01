@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from fastapi_cache.decorator import cache
-from items import UnitModel
+from models import UnitModel
 
 router = APIRouter(tags=["meta"])
 

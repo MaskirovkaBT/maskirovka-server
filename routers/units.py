@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Query, Header, HTTPException
 from fastapi_pagination import Page
 from fastapi_pagination.ext.tortoise import apaginate
-from items import UnitItem
+from schemas import UnitItem
 from services import build_unit_query
 
 router = APIRouter(prefix="/units", tags=["units"])
