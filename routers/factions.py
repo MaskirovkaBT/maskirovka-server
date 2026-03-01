@@ -9,4 +9,4 @@ router = APIRouter(prefix="/factions", tags=["factions"])
 @router.get("", response_model=list[FactionItem])
 @cache(expire=300)
 async def get_factions():
-    return await FactionModel.all()
+    return await FactionModel.all().order_by('title')
