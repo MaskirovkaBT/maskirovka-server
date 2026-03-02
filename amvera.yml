@@ -6,6 +6,6 @@ meta:
 build:
   requirementsPath: requirements.txt
 run:
-  command: fastapi run .\main.py
+  command: fastapi run main.py
   persistenceMount: /data
   containerPort: 80
