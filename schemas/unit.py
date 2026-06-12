@@ -18,5 +18,6 @@ class UnitItem(BaseModel):
     struc: int
     threshold: int
     specials: str
+    image_url: str | None = None
 
     model_config = {"from_attributes": True}

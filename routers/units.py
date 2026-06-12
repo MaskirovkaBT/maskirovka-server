@@ -1,56 +1,83 @@
-from fastapi import APIRouter, Query, Header, HTTPException
+from pathlib import Path
+
+from fastapi import APIRouter, Query, Header, HTTPException, Request
 from fastapi_pagination import Page
 from fastapi_pagination.ext.tortoise import apaginate
+
+from models import UnitModel
 from schemas import UnitItem
 from services import build_unit_query
-from models import UnitModel
+from settings import settings
 
 router = APIRouter(prefix="/units", tags=["units"])
 
 
+def _image_url(request: Request, unit_id: int) -> str | None:
+    """Возвращает полный URL изображения юнита, если файл вида <unit_id>.* найден."""
+    if not settings.images_dir:
+        return None
+
+    images_path = Path(settings.images_dir)
+    if not images_path.is_dir():
+        return None
+
+    candidate = next(images_path.glob(f"{unit_id}.*"), None)
+    if not candidate:
+        return None
+
+    return f"{request.base_url}images/{candidate.name}"
+
+
+def _unit_item_with_image(request: Request, unit) -> UnitItem:
+    item = UnitItem.model_validate(unit)
+    item.image_url = _image_url(request, unit.unit_id)
+    return item
+
+
 @router.get("/{unit_id}", response_model=UnitItem)
-async def get_unit(unit_id: int) -> UnitItem:
+async def get_unit(unit_id: int, request: Request) -> UnitItem:
     """Возвращает один юнит по его идентификатору."""
     unit = await UnitModel.get_or_none(unit_id=unit_id)
     if unit is None:
         raise HTTPException(status_code=404, detail="Юнит не найден")
-    return UnitItem.model_validate(unit)
+    return _unit_item_with_image(request, unit)
 
 
 @router.get("", response_model=Page[UnitItem])
 async def get_units(
-    era_id: int | None = None,
-    faction_id: list[int] | None = Query(None),
-    unit_type: str | None = None,
-    title: str | None = None,
-    role: str | None = None,
-    specials: str | None = Query(None, min_length=2),
-    pv: int | None = None,
-    sz: int | None = None,
-    short: int | None = None,
-    medium: int | None = None,
-    long: int | None = None,
-    extreme: int | None = None,
-    ov: int | None = None,
-    armor: int | None = None,
-    struc: int | None = None,
-    threshold: int | None = None,
-    mv: int | None = None,
-    sort_by: str | None = Query(None),
-    sort_order: str = Query("asc"),
+        request: Request,
+        era_id: int | None = None,
+        faction_id: list[int] | None = Query(None),
+        unit_type: str | None = None,
+        title: str | None = None,
+        role: str | None = None,
+        specials: str | None = Query(None, min_length=2),
+        pv: int | None = None,
+        sz: int | None = None,
+        short: int | None = None,
+        medium: int | None = None,
+        long: int | None = None,
+        extreme: int | None = None,
+        ov: int | None = None,
+        armor: int | None = None,
+        struc: int | None = None,
+        threshold: int | None = None,
+        mv: int | None = None,
+        sort_by: str | None = Query(None),
+        sort_order: str = Query("asc"),
 
-    x_specials_mode: str = Header("or", alias="X-Specials-Mode"),
-    x_pv_mode: str = Header("eq", alias="X-Pv-Mode"),
-    x_sz_mode: str = Header("eq", alias="X-Sz-Mode"),
-    x_short_mode: str = Header("eq", alias="X-Short-Mode"),
-    x_medium_mode: str = Header("eq", alias="X-Medium-Mode"),
-    x_long_mode: str = Header("eq", alias="X-Long-Mode"),
-    x_extreme_mode: str = Header("eq", alias="X-Extreme-Mode"),
-    x_ov_mode: str = Header("eq", alias="X-Ov-Mode"),
-    x_armor_mode: str = Header("eq", alias="X-Armor-Mode"),
-    x_struc_mode: str = Header("eq", alias="X-Struc-Mode"),
-    x_threshold_mode: str = Header("eq", alias="X-Threshold-Mode"),
-    x_mv_mode: str = Header("eq", alias="X-Mv-Mode"),
+        x_specials_mode: str = Header("or", alias="X-Specials-Mode"),
+        x_pv_mode: str = Header("eq", alias="X-Pv-Mode"),
+        x_sz_mode: str = Header("eq", alias="X-Sz-Mode"),
+        x_short_mode: str = Header("eq", alias="X-Short-Mode"),
+        x_medium_mode: str = Header("eq", alias="X-Medium-Mode"),
+        x_long_mode: str = Header("eq", alias="X-Long-Mode"),
+        x_extreme_mode: str = Header("eq", alias="X-Extreme-Mode"),
+        x_ov_mode: str = Header("eq", alias="X-Ov-Mode"),
+        x_armor_mode: str = Header("eq", alias="X-Armor-Mode"),
+        x_struc_mode: str = Header("eq", alias="X-Struc-Mode"),
+        x_threshold_mode: str = Header("eq", alias="X-Threshold-Mode"),
+        x_mv_mode: str = Header("eq", alias="X-Mv-Mode"),
 ) -> Page[UnitItem]:
     valid_modes = {"eq", "gt", "gte", "lt", "lte"}
     mode_headers = {
@@ -115,4 +142,7 @@ async def get_units(
         sort_order=sort_order,
     )
 
-    return await apaginate(query.distinct())
+    def transform(units):
+        return [_unit_item_with_image(request, unit) for unit in units]
+
+    return await apaginate(query.distinct(), transformer=transform)

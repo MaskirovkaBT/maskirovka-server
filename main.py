@@ -1,6 +1,9 @@
+import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.inmemory import InMemoryBackend
 from fastapi_pagination import add_pagination
@@ -8,6 +11,8 @@ from tortoise.contrib.fastapi import register_tortoise, tortoise_exception_handl
 
 from routers import eras_router, factions_router, units_router, meta_router
 from settings import settings
+
+logger = logging.getLogger("uvicorn.error")
 
 
 @asynccontextmanager
@@ -28,6 +33,17 @@ app.include_router(eras_router)
 app.include_router(factions_router)
 app.include_router(units_router)
 app.include_router(meta_router)
+
+# Раздача изображений юнитов
+if settings.images_dir:
+    images_path = Path(settings.images_dir)
+    if images_path.is_dir():
+        app.mount("/images", StaticFiles(directory=str(images_path)), name="images")
+    else:
+        logger.warning(
+            f"IMAGES_DIR does not exist or is not a directory: {images_path}. "
+            "Image URLs will not be available."
+        )
 
 register_tortoise(
     app,

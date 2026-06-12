@@ -84,6 +84,8 @@ uvicorn main:app --reload
 | GET | `/units` | Список юнитов с фильтрацией и сортировкой |
 | GET | `/units/{unit_id}` | Один юнит по идентификатору |
 
+Изображения юнитов раздаются по пути `/images/{unit_id}.*` из каталога `IMAGES_DIR`. В ответах `/units` и `/units/{unit_id}` добавляется поле `image_url` — полный URL до файла на основе текущего адреса запроса.
+
 #### Параметры фильтрации `/units`
 
 | Параметр | Тип | Описание |
@@ -183,6 +185,7 @@ Maskirovka_server/
 
 ```env
 DB_URL='sqlite://MY_DB.db'
+IMAGES_DIR='images'
 ```
 
 ## Лицензия
