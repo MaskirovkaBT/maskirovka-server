@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from fastapi import APIRouter, Query, Header, HTTPException, Request
-from fastapi_pagination import Page
+from fastapi import APIRouter, Query, Header, HTTPException, Request, Depends
+from fastapi_pagination import Page, pagination_ctx
 from fastapi_pagination.ext.tortoise import apaginate
 
 from models import UnitModel
@@ -43,7 +43,7 @@ async def get_unit(unit_id: int, request: Request) -> UnitItem:
     return _unit_item_with_image(request, unit)
 
 
-@router.get("", response_model=Page[UnitItem])
+@router.get("", response_model=Page[UnitItem], dependencies=[Depends(pagination_ctx(Page[UnitItem]))])
 async def get_units(
         request: Request,
         era_id: int | None = None,

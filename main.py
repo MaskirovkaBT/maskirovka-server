@@ -7,7 +7,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.inmemory import InMemoryBackend
-from fastapi_pagination import add_pagination
 from tortoise.contrib.fastapi import register_tortoise, tortoise_exception_handlers
 
 from routers import eras_router, factions_router, units_router, meta_router
@@ -42,7 +41,6 @@ app.include_router(factions_router)
 app.include_router(units_router)
 app.include_router(meta_router)
 
-add_pagination(app)
 
 # Раздача изображений юнитов
 if settings.images_dir:
