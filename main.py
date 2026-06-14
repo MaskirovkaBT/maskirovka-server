@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.inmemory import InMemoryBackend
@@ -27,6 +28,15 @@ app = FastAPI(
     exception_handlers=tortoise_exception_handlers(),
 )
 add_pagination(app)
+
+# CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[v.strip() for v in settings.cors_allow_origins.split(',') if v.strip()],
+    allow_credentials=False,
+    allow_methods=['*'],
+    allow_headers=['*'],
+)
 
 # Подключение роутеров
 app.include_router(eras_router)
