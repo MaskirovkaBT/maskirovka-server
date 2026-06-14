@@ -27,8 +27,6 @@ app = FastAPI(
     lifespan=lifespan,
     exception_handlers=tortoise_exception_handlers(),
 )
-add_pagination(app)
-
 # CORS
 app.add_middleware(
     CORSMiddleware,
@@ -43,6 +41,8 @@ app.include_router(eras_router)
 app.include_router(factions_router)
 app.include_router(units_router)
 app.include_router(meta_router)
+
+add_pagination(app)
 
 # Раздача изображений юнитов
 if settings.images_dir:
