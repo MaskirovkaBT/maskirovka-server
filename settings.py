@@ -5,6 +5,7 @@ class Settings(BaseSettings):
     images_dir: str = ''
 
     cors_allow_origins: str = ''
+    force_https: bool = False
 
     model_config = SettingsConfigDict(env_file='.env')
 

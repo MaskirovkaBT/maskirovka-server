@@ -13,7 +13,11 @@ router = APIRouter(prefix="/units", tags=["units"])
 
 
 def _image_url(request: Request, unit_id: int) -> str | None:
-    """Возвращает полный URL изображения юнита, если файл вида <unit_id>.* найден."""
+    """Возвращает полный URL изображения юнита, если файл вида <unit_id>.* найден.
+
+    Учитывает заголовок X-Forwarded-Proto от reverse proxy и настройку FORCE_HTTPS,
+    чтобы не отдавать http-URL при доступе через HTTPS (Mixed Content).
+    """
     if not settings.images_dir:
         return None
 
@@ -25,7 +29,13 @@ def _image_url(request: Request, unit_id: int) -> str | None:
     if not candidate:
         return None
 
-    return f"{request.base_url}images/{candidate.name}"
+    scheme = request.headers.get("x-forwarded-proto", request.url.scheme)
+    if settings.force_https:
+        scheme = "https"
+    scheme = scheme.split(",")[0].strip().lower()
+
+    base_url = f"{scheme}://{request.url.netloc}/"
+    return f"{base_url}images/{candidate.name}"
 
 
 def _unit_item_with_image(request: Request, unit) -> UnitItem:

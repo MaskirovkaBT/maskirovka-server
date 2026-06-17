@@ -186,7 +186,20 @@ Maskirovka_server/
 ```env
 DB_URL='sqlite://MY_DB.db'
 IMAGES_DIR='images'
+
+# CORS
+CORS_ALLOW_ORIGINS='*'
+
+# Принудительно использовать HTTPS при формировании image_url
+# (актуально при размещении за reverse proxy, например Amvera)
+FORCE_HTTPS=false
 ```
+
+> **Mixed Content / HTTPS за reverse proxy**
+>
+> Если приложение работает за reverse proxy (например, на Amvera), клиент может обращаться по HTTPS, а proxy передавать запросы в контейнер по HTTP. В этом случае `image_url` может формироваться с протоколом `http://`, что вызывает ошибку Mixed Content в браузере.
+>
+> Исправление: приложение учитывает заголовок `X-Forwarded-Proto` от прокси. Если прокси не передаёт этот заголовок, установите `FORCE_HTTPS=true`.
 
 ## Лицензия
 
